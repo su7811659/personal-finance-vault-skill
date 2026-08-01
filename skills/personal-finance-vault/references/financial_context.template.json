@@ -1,0 +1,90 @@
+{
+  "_template_note": "Copy to data/personal/financial_context.json. Every value below is a placeholder. Record only what the user actually said or what documents confirm; leave everything else null and list it under unknown_values_must_not_be_inferred. Tag each block with a source: user_reported_in_conversation, derived_from_<dataset>, or confirmed_by_<document>.",
+  "schema_version": "1.0.0",
+  "as_of_date": null,
+  "base_currency": null,
+  "personal_timeline": {
+    "date_of_birth": null,
+    "source": null
+  },
+  "liabilities": [
+    {
+      "liability_id": "example_loan_01",
+      "type": null,
+      "status": null,
+      "currency": null,
+      "origination_date": null,
+      "maturity_date": null,
+      "original_principal": null,
+      "nominal_annual_interest_rate": null,
+      "term_months": null,
+      "scheduled_monthly_payment": null,
+      "origination_fee": null,
+      "prepayment_terms": {
+        "contract_verification_required": true
+      },
+      "planned_repayment": {
+        "status": null,
+        "planned_date": null,
+        "funding_source": null
+      },
+      "source": null
+    }
+  ],
+  "earned_income_profile": {
+    "status": null,
+    "currency": null,
+    "employer": null,
+    "employment_start_date": null,
+    "monthly_base_salary": null,
+    "raise_cycle": null,
+    "observed_raises": [],
+    "variable_compensation": [
+      {
+        "type": "example_bonus",
+        "timing": null,
+        "formula": null,
+        "certainty": null
+      }
+    ],
+    "source": null
+  },
+  "recurring_expenses": [
+    {
+      "expense_id": "example_expense",
+      "category": null,
+      "currency": null,
+      "frequency": null,
+      "amount_observed_average": null,
+      "source": null
+    }
+  ],
+  "liquid_assets_snapshot": {
+    "as_of_date": null,
+    "currency": null,
+    "accounts": [],
+    "total": null,
+    "source": null
+  },
+  "side_income": {},
+  "financial_goals": [
+    {
+      "goal_id": "example_goal",
+      "type": null,
+      "target_date": null,
+      "target_annual_spending": null,
+      "target_portfolio_value": null,
+      "source": null
+    }
+  ],
+  "investment_preferences": {
+    "source": null
+  },
+  "analysis_notes": {
+    "liability_aware_performance_required": true,
+    "brokerage_deposit_is_not_investment_profit": true,
+    "unknown_values_must_not_be_inferred": [
+      "list every fact you do not actually know, one string per fact"
+    ]
+  }
+}
