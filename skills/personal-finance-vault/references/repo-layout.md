@@ -17,6 +17,8 @@
 │   ├── convert_<type>.py          # full rebuild, idempotent, sorted output
 │   └── check_data_freshness.py    # what is missing or due soon
 ├── data/
+│   ├── documents.csv              # manifest: one row per source doc (hash, period, parser version)
+│   ├── raw_text/                  # UNTRACKED loss-minimizing extraction layer
 │   ├── normalized/                # reproducible CSV, one domain per file
 │   │   ├── payroll.csv            #   one row per payslip
 │   │   ├── payroll_items.csv      #   one row per payslip line item
@@ -42,9 +44,22 @@
 - Blank means unavailable - never zero.
 - Positive amounts credit the account; negative amounts debit it. State the
   convention in the data README and keep it identical across domains.
-- Generated files (`data/normalized/`, `data/quality/`, `data/derived/`) are
-  committed for convenience but treated as disposable: any dispute is
-  settled by rerunning the converter against `Source/`.
+- Generated files (`data/normalized/`, `data/quality/`, `data/derived/`)
+  are disposable: any dispute is settled by rerunning the converter against
+  `Source/`. Whether to commit them is the user's call (Phase 1): committing
+  is convenient; gitignoring reduces exposure if the repo ever leaks.
+- `data/raw_text/` (layout-preserving extracted text) is always gitignored:
+  it duplicates sensitive document content and is regenerable, but keeping
+  it locally lets improved parsers reprocess without information loss.
+- `data/personal/` holds only analysis-relevant facts - no government IDs,
+  no full account numbers, no identity documents, no scanned contracts
+  (those stay in `Source/`).
+- Add a `.gitattributes` pinning text files to one EOL style (e.g. CSV to
+  LF) and marking PDFs/databases binary - byte-identical rebuilds across
+  platforms depend on it.
+- `Source/` is the only irreplaceable layer (institutions purge download
+  history). Recommend an encrypted backup (e.g. an encrypted archive or a
+  private encrypted remote) beyond the single working copy.
 
 ## What is canonical vs reproducible
 
@@ -52,5 +67,5 @@
 |---|---|---|
 | `Source/` | yes | wins |
 | `data/personal/` | yes (user-stated facts) | user decides |
-| `data/normalized|quality|derived/` | no | regenerate |
+| `data/normalized`, `data/quality`, `data/derived` | no | regenerate |
 | `reports/` | no | regenerate |

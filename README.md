@@ -48,7 +48,8 @@ skills/personal-finance-vault/
     ├── repo-layout.md           # target directory structure and conventions
     ├── AGENTS-template.md       # agent rules for the generated vault repo
     ├── financial_context.template.json
-    └── parser-playbook.md       # extraction, validation, reconciliation
+    ├── parser-playbook.md       # extraction, staged imports, validation
+    └── analysis-playbook.md     # returns math, income/spending, FI scenarios
 examples/
 └── demo-walkthrough.md          # fictional three-session example
 ```

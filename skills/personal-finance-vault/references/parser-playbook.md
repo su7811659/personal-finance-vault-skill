@@ -21,6 +21,11 @@ Note every variant you must handle; expect more in old documents.
   read them as images to learn the layout and labels, then return to
   programmatic extraction for the actual data. Vision is for *learning the
   layout*, never the production data path.
+- **Keep a loss-minimizing intermediate layer.** Dump each document's
+  layout-preserving extracted text to `data/raw_text/` (untracked - it
+  duplicates sensitive content and is regenerable). When the parser later
+  learns to recognize more row types, you reprocess from this layer without
+  information loss instead of re-solving PDF extraction.
 - **Excel exports from web banking are not clean tables.** Expect title
   rows, key-value metadata rows, a footer row ("N records, exported at..."),
   ragged short rows where trailing cells are omitted, and newest-first
@@ -36,7 +41,9 @@ Requirements for every converter:
   (institution, filename), regenerate output files from scratch. Never
   append to or merge into existing CSV. Same input -> byte-identical output.
 - **Traceability columns** on every row: `source_file`, `source_row`,
-  `file_sha256`, `parser_version`.
+  `file_sha256`, `parser_version`. Additionally maintain a dataset-level
+  manifest (`data/documents.csv` or per-domain equivalent): one row per
+  source document with its hash, detected period, and parser version.
 - **Password resolution chain** for protected files: CLI flag, then
   environment variable, then an untracked dotfile - never a tracked file,
   never hardcoded.
@@ -48,8 +55,34 @@ Requirements for every converter:
   side-gig payout) live in `data/personal/<domain>_rules.csv` as
   substring -> category rows, applied before generic rules. Users extend the
   CSV; the code never changes for a new counterparty.
+- **Overlap defense for range exports.** Files named `<start>_<end>` will
+  eventually overlap (the user re-exports a window that intersects an old
+  one). Detect period overlap across files of the same institution and
+  report it as a quality **error** before rows are double counted - balance
+  walks catch this for bank accounts, but domains without a balance chain
+  (cards) fail silently.
 
-## 4. Mandatory quality checks
+## 4. Import new documents transactionally
+
+The converter being deterministic is not enough; **a failed import must
+leave the canonical dataset untouched.** For the recurring import flow
+(new monthly statement arrives):
+
+1. Reject conflicts up front: a file whose target name exists with a
+   different hash is an error to surface, never to overwrite; a file whose
+   hash already exists is `already_imported` - do not duplicate or rename.
+2. Copy sources plus the candidate into a **staging directory**, run the
+   full rebuild there, and run all quality checks against the staged output.
+3. Only when validation passes, move the candidate into `Source/` and
+   replace the canonical generated files. Keep a backup of the replaced
+   outputs for one import cycle.
+4. Support a validate-only mode (dry run: full staged rebuild and checks,
+   zero writes to the repo).
+5. Emit a machine-readable summary (status, detected period, row counts,
+   warnings, reconciliation statuses) so the session can review the import
+   item by item before describing it to the user as clean.
+
+## 5. Mandatory quality checks
 
 Write results to `data/quality/<domain>_checks.csv` with columns
 `check, expected, actual, status` (status: matched / mismatch / warning /
@@ -61,13 +94,17 @@ review). Minimum set by domain:
 | Bank accounts | balance walk: `balance[i-1] + amount[i] == balance[i]` for every consecutive row |
 | Credit cards | sum(purchase lines) == stated statement total; exclude payment/credit records from spending |
 | Any | count of rows whose label matched no category (unmapped -> warning, listed individually) |
-| Any | filename period == period stated inside the document |
+| Any | filename period == period stated inside the document; overlap across range exports |
 
 **Every mismatch gets investigated before the dataset is called clean.**
 Legitimate explanations (pending settlement, same-day reordering) get
 recorded next to the check, not waved away.
 
-## 5. Cross-dataset reconciliation
+Also document what the parser does **not** yet recognize (a "current
+limitations" section in the data README). Honesty about the tool is the
+same discipline as honesty about the data.
+
+## 6. Cross-dataset reconciliation
 
 The strongest validation is two independent documents agreeing:
 
@@ -80,7 +117,7 @@ The strongest validation is two independent documents agreeing:
 Run these once both sides exist, and report agreements as explicitly as
 discrepancies - they are what makes the vault trustworthy.
 
-## 6. Reverse-engineering formulas (optional but high value)
+## 7. Reverse-engineering formulas (optional but high value)
 
 With enough history, payroll usually reveals exact employer formulas
 (raise month; bonus = clean multiplier x some base). Test candidate formulas
@@ -88,15 +125,54 @@ against **every** year; a formula that fits one year is a coincidence
 (averages and off-by-one-month bases often coincide for a single year).
 Prefer the candidate that yields clean round multipliers across all years
 with zero residual. Record the formula and its observed parameters in
-`financial_context.json`, superseding the user's verbal estimates.
+`financial_context.json`, superseding the user's verbal estimates. See
+[analysis-playbook.md](analysis-playbook.md) for the analysis side.
 
-## 7. Freshness checker
+## 8. Freshness checker
 
-A small script that encodes each source's cadence: statement expected N days
-after period end, payslip by payday, range exports stale after ~35 days,
-statement cycle closing day for cards - plus continuity scans for missed
-months and pending-confirmation reminders read from the context file. Print
-`[missing] / [upcoming] / [note]` lines; exit 0 always (it reports, it does
-not block). Wire it into session start (Claude Code `SessionStart` hook
-returning `systemMessage` + `additionalContext` JSON; a plain instruction in
-AGENTS.md for other agents).
+A small script that reports what is missing or due soon. Cadence facts
+(payday, statement lag days, export staleness threshold) are personal data:
+keep them in a config file under `data/personal/`, not hardcoded, so
+adjusting a payday is a data edit rather than a code change. Check:
+continuity of monthly series, due dates for the last completed period,
+staleness of range exports, and pending confirmations read from the context
+file. Print `[missing] / [upcoming] / [note]` lines; exit 0 always (it
+reports, it does not block).
+
+Wire it into session start. For Claude Code, `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/check_data_freshness.py --hook",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+and in `--hook` mode the script prints one JSON object to stdout - the
+`systemMessage` is shown to the user, the `additionalContext` is injected
+into the model's context:
+
+```json
+{
+  "systemMessage": "[upcoming] ACME payslip 2031-01 expected by 2031-02-05",
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "Freshness report... surface these items to the user and offer to import."
+  }
+}
+```
+
+For other agent frameworks, an equivalent instruction in the vault's agent
+instructions file ("run the checker at session start and report") covers
+the same ground.

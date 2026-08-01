@@ -80,9 +80,19 @@
   "investment_preferences": {
     "source": null
   },
+  "expected_events_pending_confirmation": [
+    {
+      "event_id": "example_expected_wire",
+      "description": null,
+      "expected_statement_month": null,
+      "reconciliation_instruction": "Match to the statement entry; replace approximate amounts only when the statement confirms the exact value.",
+      "source": null
+    }
+  ],
   "analysis_notes": {
     "liability_aware_performance_required": true,
     "brokerage_deposit_is_not_investment_profit": true,
+    "planned_events_are_not_completed_transactions": true,
     "unknown_values_must_not_be_inferred": [
       "list every fact you do not actually know, one string per fact"
     ]

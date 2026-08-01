@@ -24,14 +24,21 @@ a pile of files.
 3. **Never infer unknowns.** Missing facts are recorded as null plus an entry
    in an explicit unknowns list - never guessed. When the user later provides
    the fact, replace the estimate and note what superseded it.
-4. **Deposits are not gains.** External cash flows (wires into a brokerage,
-   loan disbursements) must never be counted as investment performance. Use
-   cash-flow-aware return math (Modified Dietz, XIRR).
+4. **Deposits are not gains, and plans are not events.** External cash flows
+   (wires into a brokerage, loan disbursements) must never be counted as
+   investment performance - use cash-flow-aware return math (Modified Dietz,
+   XIRR). A planned repayment or expected wire is never treated as a
+   completed transaction until a statement confirms it.
 5. **Credentials never enter version control.** Document passwords live in an
    untracked file or environment variable, resolved at runtime. Verify with
    `git check-ignore` before the first commit.
-6. **The repository must be private.** Confirm this before the first push.
-   Never copy its contents into public repositories, issues, or pastebins.
+6. **The repository must be private, and even inside it, minimize.** Confirm
+   privacy before the first push; never copy vault contents into public
+   repositories, issues, or pastebins. Within the vault, the machine-readable
+   layers keep only what analysis needs - no government IDs, no full account
+   numbers, no identity documents. And be transparent about the data flow
+   this workflow implies: the documents are read by the user's agent/model
+   provider - say so in Phase 1 and let the user decide.
 7. **Leave room for new sources.** Every document type gets its own
    `Source/<type>/<institution>/` directory, its own parser, and its own
    normalized output files. Never overload an existing schema because a new
@@ -40,7 +47,13 @@ a pile of files.
 ## Phase 1 - Bootstrap the repository
 
 1. Create a git repository (confirm it is private if remote) with the layout
-   in [references/repo-layout.md](references/repo-layout.md).
+   in [references/repo-layout.md](references/repo-layout.md). Two choices to
+   put to the user explicitly: (a) whether generated CSVs are committed
+   (convenient) or gitignored (less exposure if the repo ever leaks - they
+   are reproducible either way); (b) that this workflow means their
+   financial documents are read by their agent/model provider - confirm
+   they accept that data flow. Also remind them `Source/` is irreplaceable
+   (banks purge download history) and deserves an encrypted backup.
 2. Write the repository's agent instructions from
    [references/AGENTS-template.md](references/AGENTS-template.md), filling in
    the user's actual source types.
@@ -63,6 +76,8 @@ records, e-invoice exports. For each one the user can provide:
    point-in-time statements, `YYYY-MM.<ext>` for monthly documents,
    `<start>_<end>.<ext>` for range exports. Convert local calendars (e.g.
    ROC years: add 1911) in file names; keep originals' content untouched.
+   Record an original-name -> new-name mapping in the directory README -
+   original filenames often carry traceability hints you may want later.
 3. Detect and delete only **hash-identical** duplicates (`sha256`), with the
    user's confirmation.
 4. Check continuity: list missing months and ask the user whether they are
@@ -83,15 +98,22 @@ each source type. Summary of the loop:
 3. Write one deterministic converter script per source type that rebuilds
    `data/normalized/<domain>.csv` from scratch on every run (idempotent, no
    appending), plus `data/quality/<domain>_checks.csv`.
-4. Run the quality checks. Investigate every mismatch before declaring the
+4. For the recurring "new statement arrived" flow, make imports
+   **transactional**: reject date/hash conflicts, rebuild into a staging
+   area, validate there, and only replace the canonical dataset when every
+   check passes - a failed import must leave the vault untouched. Provide a
+   validate-only dry run.
+5. Run the quality checks. Investigate every mismatch before declaring the
    dataset clean. Unrecognized labels go to the quality file as warnings -
-   never silently dropped, never silently guessed.
-5. Personal knowledge (which account is rent, which transfer is the side-gig
+   never silently dropped, never silently guessed. Document what the parser
+   does not yet recognize.
+6. Personal knowledge (which account is rent, which transfer is the side-gig
    payout) belongs in a user-maintained rules file under `data/personal/`, applied by
    the parser before generic rules - so extending it requires no code change.
 
 ## Phase 4 - Analysis
 
+Follow [references/analysis-playbook.md](references/analysis-playbook.md).
 Only analyze data that passed its checks. The high-value analyses, in the
 order they usually become possible:
 
@@ -127,6 +149,12 @@ that most change the conclusion.
    fetch - e.g. "July statement due in 4 days; payslip expected the 5th."
 3. When new documents arrive: archive, rerun the converter, review checks,
    rerun affected analyses. Commit only when the user asks.
+4. As operations become routine, **encapsulate them as vault-local skills**
+   (e.g. `.claude/skills/import-<broker>-statement/` or
+   `.agents/skills/...` inside the vault repo): a short SOP that names the
+   importer script, the checks to review, and the red lines. The vault then
+   carries its own operating manual, and any future session follows the
+   same procedure instead of improvising.
 
 ## Red lines
 
