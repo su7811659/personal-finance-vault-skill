@@ -39,6 +39,11 @@ Copy `skills/personal-finance-vault/` into your agent's skill directory:
 Then ask your agent something like *"help me organize my personal finances
 into a repo"* - or invoke it directly with `/personal-finance-vault`.
 
+Shortcut: just clone this repo and start your agent inside it - the root
+`AGENTS.md`/`CLAUDE.md` (read by Claude Code, Codex, and other agent CLIs)
+tells the agent to walk you through installation, or to simply follow the
+skill directly in a fresh private directory. No framework machinery needed.
+
 ## Layout
 
 ```
