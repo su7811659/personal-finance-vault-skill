@@ -8,13 +8,20 @@ These rules are what make the vault safe to hand to *any* agent session.
 
 - At the start of a session, run `python scripts/check_data_freshness.py`
   and tell the user which source documents are missing or due soon. Offer to
-  import anything they provide.
+  import anything they provide. Also scan files directly under `Source/`:
+  treat them as new raw intake, inspect their contents, and move recognized
+  documents into the matching canonical subdirectory before importing.
 - Treat `Source/` as the canonical records. Name files by coverage:
   statements `YYYY-MM-DD.<ext>` (period end), monthly documents
   `YYYY-MM.<ext>`, range exports `<start>_<end>.<ext>`.
 - Each document type lives in its own `Source/<type>/<institution>/`
   directory with its own converter script and its own normalized outputs.
-  Do not repurpose another type's directory or schema.
+  Do not repurpose another type's directory or schema. Domain converters
+  must not scan the `Source/` top level; unrecognized intake stays there
+  until the user clarifies it.
+- Classify intake from document content, not filename alone. Preserve file
+  bytes while moving and renaming. Refuse destination collisions unless the
+  files are hash-identical; ask before deleting a confirmed duplicate.
 - Treat `data/normalized/`, `data/quality/`, and `data/derived/` as
   reproducible outputs. Never hand-edit them; rerun the converter:
   [list your converters here, e.g. `python scripts/convert_payslips.py`].

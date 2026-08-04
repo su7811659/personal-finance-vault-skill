@@ -8,9 +8,14 @@ this repository.
 
 Jo: *"Help me organize my finances. I have payslip PDFs from ACME."*
 
-The agent bootstraps a private vault repo (Phase 1), then:
+The agent asks Jo's preferred name and offers `jo-personal-finance`,
+`jo-finance-vault`, and `j-finance-vault`. Jo chooses
+`jo-personal-finance`; the agent creates it outside the public skill repo and
+confirms the remote is private. Jo then drops the PDFs directly into
+`Source/`, and the agent:
 
-1. Creates `Source/payslips/ACME/`, renames `pay_2029_03.pdf` style files to
+1. Identifies the documents from their contents, creates
+   `Source/payslips/ACME/`, moves and renames `pay_2029_03.pdf` style files to
    `2029-03.pdf`, finds two byte-identical duplicate downloads by SHA-256 and
    deletes them with Jo's confirmation.
 2. Notices `2028-11` is missing; Jo confirms ACME only issued paper slips
@@ -26,10 +31,11 @@ The agent bootstraps a private vault repo (Phase 1), then:
 
 ## Session 2 - bank export and cross-checks
 
-Jo drops in a Nova Bank transaction export (`.xlsx`, newest-first, with a
-footer row "412 records").
+Jo drops a Nova Bank transaction export directly into `Source/` (`.xlsx`,
+newest-first, with a footer row "412 records").
 
-1. Archived as `Source/bank/NovaBank/2030-01-01_2030-12-31.xlsx`.
+1. The agent recognizes it from workbook contents and archives it as
+   `Source/bank/NovaBank/2030-01-01_2030-12-31.xlsx`.
 2. `convert_bank.py` stores rows oldest-first; the balance walk chains with
    zero breaks across all 412 rows.
 3. Cross-check: every monthly salary deposit equals the payslip net pay to

@@ -7,7 +7,8 @@
 ├── .gitignore                     # password files, raw text dumps, OS debris
 ├── .claude/settings.json          # optional: SessionStart freshness hook
 ├── Source/                        # canonical original documents (never edited)
-│   ├── <brokerage statements>     # e.g. 2031-01-31.pdf, named by period end
+│   ├── <new raw documents>        # temporary intake: agent classifies and moves
+│   ├── brokerage/<Broker>/        # e.g. 2031-01-31.pdf, named by period end
 │   ├── payslips/<Company>/        # 2031-01.pdf ... ; YYYY-yearend.pdf
 │   ├── bank/<Bank>/               # 2030-08-01_2031-07-31.xlsx (coverage range)
 │   ├── creditcard/<Bank>/         # 2031-07.xlsx (statement cycle month)
@@ -36,6 +37,11 @@
 
 ## Conventions
 
+- The user may drop any new raw document directly into the top level of
+  `Source/`. The agent inspects its content and moves it unchanged into the
+  matching canonical subdirectory. Files that cannot be classified safely
+  stay at the top level for review. Domain converters never scan the top
+  level; they scan only their own `Source/<type>/<institution>/` paths.
 - UTF-8 everywhere; dates `YYYY-MM-DD`; decimals without thousands
   separators or currency symbols; one currency per file, named in the docs.
 - Every normalized row carries `source_file`, a `file_sha256`, and a

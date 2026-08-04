@@ -46,20 +46,29 @@ a pile of files.
 
 ## Phase 1 - Bootstrap the repository
 
-1. Create a git repository (confirm it is private if remote) with the layout
-   in [references/repo-layout.md](references/repo-layout.md). Two choices to
-   put to the user explicitly: (a) whether generated CSVs are committed
+1. Ask what preferred name, nickname, or initials the user wants in the
+   repository name. Offer 2-4 concrete choices rather than an empty naming
+   question: `<name>-personal-finance` (recommended),
+   `<name>-finance-vault`, `personal-finance-<name>`, and a lower-identity
+   option such as `<initials>-finance-vault`. Never derive a repository name
+   from a government ID, email address, or machine username without the
+   user's confirmation. Also ask where the separate vault directory should
+   live.
+2. Create the git repository (confirm it is private if remote) with the
+   layout in [references/repo-layout.md](references/repo-layout.md). The
+   vault must not be created inside this public skill repository. Two choices
+   to put to the user explicitly: (a) whether generated CSVs are committed
    (convenient) or gitignored (less exposure if the repo ever leaks - they
    are reproducible either way); (b) that this workflow means their
    financial documents are read by their agent/model provider - confirm
    they accept that data flow. Also remind them `Source/` is irreplaceable
    (banks purge download history) and deserves an encrypted backup.
-2. Write the repository's agent instructions from
+3. Write the repository's agent instructions from
    [references/AGENTS-template.md](references/AGENTS-template.md), filling in
    the user's actual source types.
-3. Create `.gitignore` covering: password files, raw extracted text dumps,
+4. Create `.gitignore` covering: password files, raw extracted text dumps,
    OS/editor debris.
-4. Create `data/personal/financial_context.json` from
+5. Create `data/personal/financial_context.json` from
    [references/financial_context.template.json](references/financial_context.template.json).
    Interview the user briefly (goals, liabilities, income shape) and record
    what they say with `"source": "user_reported_in_conversation"` - estimates
@@ -69,21 +78,39 @@ a pile of files.
 
 Ask which sources exist: brokerage statements, payslips, bank account
 exports, credit card statements, loan contracts/screenshots, pension
-records, e-invoice exports. For each one the user can provide:
+records, e-invoice exports. Tell the user to drop new raw documents directly
+into the top level of `Source/`; do not require an inbox directory or require
+the user to know the final taxonomy. At session start and whenever the user
+says files were added, scan only files directly under `Source/` and route
+them as follows:
 
-1. Create `Source/<type>/<institution>/`.
-2. Normalize file names to their coverage period: `YYYY-MM-DD.pdf` for
+1. Inspect content, not just the supplied filename, to identify the document
+   type, institution, account context, and coverage date. If encrypted, use
+   an environment variable or untracked password file; never echo or track
+   the password. If classification is ambiguous, leave the file at the
+   `Source/` top level and ask the user instead of guessing.
+2. Create the corresponding `Source/<type>/<institution>/` directory. Each
+   domain parser must scan only its canonical subdirectory, never the
+   `Source/` top level, so an unclassified document cannot be imported by
+   accident.
+3. Normalize file names to their coverage period: `YYYY-MM-DD.pdf` for
    point-in-time statements, `YYYY-MM.<ext>` for monthly documents,
    `<start>_<end>.<ext>` for range exports. Convert local calendars (e.g.
    ROC years: add 1911) in file names; keep originals' content untouched.
    Record an original-name -> new-name mapping in the directory README -
    original filenames often carry traceability hints you may want later.
-3. Detect and delete only **hash-identical** duplicates (`sha256`), with the
+4. Before moving, reject a destination collision unless the files are
+   hash-identical. Detect and delete only **hash-identical** duplicates
+   (`sha256`), with the
    user's confirmation.
-4. Check continuity: list missing months and ask the user whether they are
+5. Move the unchanged original into its canonical directory, then run that
+   source type's transactional importer and review its summary and quality
+   checks. If no parser exists yet, archive the document and report that a
+   dedicated parser is the next required step.
+6. Check continuity: list missing months and ask the user whether they are
    real gaps or expected (paper-only era, account opened later). Record the
    answer in the source directory's README so no future session re-asks.
-5. If files are password-protected, set up the untracked password file now
+7. If files are password-protected, set up the untracked password file now
    and record *where the password lives* (not the password) in the README.
 
 ## Phase 3 - Build parsers

@@ -22,9 +22,14 @@ are the supporting playbooks; SKILL.md tells you when to read each.
 
 ## Durable install (skill triggers automatically in future sessions)
 
-Copy the **whole** `skills/personal-finance-vault/` directory (SKILL.md
-plus `references/` - relative links must keep working) into your
-framework's skill location:
+Prefer a directory junction or symlink from the framework's skill location
+to the **whole** `skills/personal-finance-vault/` directory in this clone
+(SKILL.md plus `references/` - relative links must keep working). Then future
+updates require only `git pull --ff-only` in this public repository and a new
+agent session. Copying the directory also works, but every pull must be
+followed by another complete copy or the installed skill stays stale.
+
+Common framework skill locations:
 
 - **Claude Code**, user-wide: `~/.claude/skills/personal-finance-vault/`
   (then `/personal-finance-vault` works in any project)
@@ -34,6 +39,10 @@ framework's skill location:
   global instructions file (e.g. `~/.codex/AGENTS.md`) pointing at the
   SKILL.md path with a note to read and follow it when the user asks to
   organize personal finances.
+
+Never pull this public skill repository into a user's private vault. Keep the
+two repositories separate; update the public clone, then let the installed
+link expose the new version.
 
 After installing, the user starts a session in their vault directory and
 says something like "help me organize my personal finances into a repo" -
