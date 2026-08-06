@@ -74,6 +74,17 @@
       "target_date": null,
       "target_annual_spending": null,
       "target_portfolio_value": null,
+      "required_return_as_of": null,
+      "review_cadence": null,
+      "source": null
+    }
+  ],
+  "user_decisions": [
+    {
+      "decision_id": "example_decision",
+      "decision": null,
+      "scope": null,
+      "implication": "State what this rules out so no future session re-proposes it, and what remains open so the door is not closed wider than the user chose.",
       "source": null
     }
   ],

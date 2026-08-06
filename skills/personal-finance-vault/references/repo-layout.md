@@ -13,6 +13,10 @@
 │   ├── bank/<Bank>/               # 2030-08-01_2031-07-31.xlsx (coverage range)
 │   ├── creditcard/<Bank>/         # 2031-07.xlsx (statement cycle month)
 │   ├── loan/<loan-id>/            # contracts, web screenshots, dated
+│   ├── <snapshot-type>/           # point-in-time records (pension printout,
+│   │                              #   insurance register): archive + a context
+│   │                              #   entry citing each figure's source file -
+│   │                              #   no parser; they are not a recurring series
 │   └── <future-type>/<inst>/      # every new source gets its own directory
 ├── scripts/                       # one deterministic converter per source type
 │   ├── convert_<type>.py          # full rebuild, idempotent, sorted output
@@ -62,7 +66,9 @@
   (those stay in `Source/`).
 - Add a `.gitattributes` pinning text files to one EOL style (e.g. CSV to
   LF) and marking PDFs/databases binary - byte-identical rebuilds across
-  platforms depend on it.
+  platforms depend on it. Corollary: normalize a text source's line endings
+  to the pinned style **before** archiving and hashing it, so the recorded
+  `file_sha256` reproduces from a fresh clone (see the parser playbook).
 - `Source/` is the only irreplaceable layer (institutions purge download
   history). Recommend an encrypted backup (e.g. an encrypted archive or a
   private encrypted remote) beyond the single working copy.

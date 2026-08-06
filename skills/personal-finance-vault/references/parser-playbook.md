@@ -21,6 +21,20 @@ Note every variant you must handle; expect more in old documents.
   read them as images to learn the layout and labels, then return to
   programmatic extraction for the actual data. Vision is for *learning the
   layout*, never the production data path.
+- **Positional PDFs (rebuilt from character boxes) have three geometry
+  traps.** (a) Group characters into lines by the **vertical center** of each
+  glyph's ink box, never by its top: a short glyph - a full-width hyphen, a
+  comma - has its ink at the line's optical middle, so its top sits several
+  points below the tall characters beside it; top-based grouping exiles it to
+  its own row or, in tight layouts, into the neighbouring line, silently
+  inserting punctuation mid-name. Centers are stable: within a line they vary
+  by ~1 point, adjacent lines sit several points apart. (b) Do not derive
+  column boundaries from the header label's own edges - data rows are often
+  not aligned to the header text, and a bound set from the label can cut the
+  first cell off every value. Bound a column by the *adjacent* columns' edges
+  instead. (c) Records can straddle page breaks (first line of a record at
+  the bottom of one page, the rest at the top of the next); stitch pages into
+  one continuous coordinate stream before attaching lines to records.
 - **Keep a loss-minimizing intermediate layer.** Dump each document's
   layout-preserving extracted text to `data/raw_text/` (untracked - it
   duplicates sensitive content and is regenerable). When the parser later
@@ -32,6 +46,12 @@ Note every variant you must handle; expect more in old documents.
   ordering you should reverse to store oldest-first.
 - **Local calendars.** Convert e.g. ROC years (+1911) at the parsing
   boundary; store ISO dates only.
+- **Hash what git will store.** If `.gitattributes` pins CSV sources to LF,
+  normalize a CRLF download's line endings **before** archiving and hashing
+  it - otherwise the recorded `file_sha256` can never be reproduced from a
+  fresh clone. Same rule for any text source: the bytes you hash must be the
+  bytes the repository preserves. Never transcode the character encoding,
+  though - archive cp950/Big5 content as-is and decode at parse time.
 
 ## 3. One converter script per source type
 
@@ -93,8 +113,24 @@ review). Minimum set by domain:
 | Payslips | sum(items per section) == stated section subtotal; additions - deductions == stated net pay |
 | Bank accounts | balance walk: `balance[i-1] + amount[i] == balance[i]` for every consecutive row |
 | Credit cards | sum(purchase lines) == stated statement total; exclude payment/credit records from spending |
+| Statements with no printed total | prove against an identity in another source (e.g. each cycle's purchases == the next cycle's direct-debit settlement in the bank account); the newest period has no successor yet - record it `not_applicable`, never as a failure |
 | Any | count of rows whose label matched no category (unmapped -> warning, listed individually) |
 | Any | filename period == period stated inside the document; overlap across range exports |
+| Two sources carrying the same **text** | content agreement on rows matched by (date, amount) - see below |
+
+**Arithmetic checks prove amounts; they say nothing about text columns.** A
+merchant/description column can be silently wrong for years while every sum
+and balance walk stays green. Whenever a second source renders the same
+string (a card statement's merchant vs the deposit account's memo for the
+same purchase), add a content-agreement check: match rows on (date, amount),
+normalize whitespace and full-width forms, compare. Two traps: an **empty**
+comparison value is an absent comparison, not an agreeing one -
+`"x".startswith("")` is vacuously true, so memo-less rows silently count as
+verified unless filtered; and residual disagreements that are the source
+systems disagreeing with *each other* (unmappable glyphs one side omits,
+separator characters rendered differently) should be folded into the
+normalization so the check reads 100% and any future drop is a real
+regression - a permanently-yellow check trains everyone to ignore it.
 
 **Every mismatch gets investigated before the dataset is called clean.**
 Legitimate explanations (pending settlement, same-day reordering) get
@@ -176,3 +212,12 @@ into the model's context:
 For other agent frameworks, an equivalent instruction in the vault's agent
 instructions file ("run the checker at session start and report") covers
 the same ground.
+
+**Prove the hook fires before trusting it.** Run the hook's exact command by
+hand once after wiring it up. A hook that fails silently is worse than no
+hook: the freshness report simply never appears, and nobody notices the
+absence. The classic trap on Windows is the Microsoft Store `python` stub -
+a zero-byte alias that exits with an error and no output, so the hook dies
+every session while the real interpreter (`py`, or a fully-pathed python)
+sits unused. If the interpreter situation is uncertain, verify with
+`python --version` / `py --version` and write the working one into the hook.

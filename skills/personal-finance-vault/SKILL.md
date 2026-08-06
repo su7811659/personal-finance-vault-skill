@@ -1,6 +1,6 @@
 ---
 name: personal-finance-vault
-description: Guide the user through building and maintaining a private, machine-readable personal-finance repository - archiving source documents (brokerage statements, payslips, bank and credit card exports, loan records), building deterministic parsers with arithmetic reconciliation, maintaining a personal financial context file, and running liability-aware performance, income, spending, and financial-independence analysis. Use when a user wants to organize their personal finances with an agent, import financial documents (對帳單, 薪資單, statements, payslips), or set up a personal finance repo.
+description: Guide the user through building and maintaining a private, machine-readable personal-finance repository - archiving source documents (brokerage statements, payslips, bank and credit card exports, loan records), building deterministic parsers with arithmetic reconciliation, maintaining a personal financial context file, and running liability-aware performance, income, spending, balance-sheet/net-worth, and financial-independence (FIRE) analysis. Use when a user wants to organize their personal finances with an agent, import financial documents (對帳單, 薪資單, statements, payslips), build a net-worth statement (資產負債表), plan financial independence, or set up a personal finance repo.
 ---
 
 # Personal Finance Vault
@@ -24,6 +24,10 @@ a pile of files.
 3. **Never infer unknowns.** Missing facts are recorded as null plus an entry
    in an explicit unknowns list - never guessed. When the user later provides
    the fact, replace the estimate and note what superseded it.
+   The same discipline applies to **decisions**: when the user rules
+   something out ("I will not surrender this policy"), record it in the
+   context file's `user_decisions` with its scope and what remains open -
+   otherwise every future session re-proposes the rejected option.
 4. **Deposits are not gains, and plans are not events.** External cash flows
    (wires into a brokerage, loan disbursements) must never be counted as
    investment performance - use cash-flow-aware return math (Modified Dietz,
@@ -156,10 +160,22 @@ order they usually become possible:
   empirical numbers; update the context file, superseding user guesses.
 - **Spending structure.** Classify bank/card flows; separate recurring
   baseline from one-offs; state the annual spending range honestly.
+- **The query layer.** Once a second source covers the same money as the
+  first, encode the don't-count-it-twice rules as SQLite views over a
+  mirror of the CSVs, instead of re-deriving them by hand every session -
+  hand-derived dedup eventually goes wrong silently.
+- **Balance sheet.** A monthly net-worth series with assets tiered by
+  accessibility (liquid / invested / age-gated / unvalued-but-listed) and
+  liabilities at amortized balance. This is where the FI projection's
+  inputs come from; it is gated on its own inputs (dated FX, statement
+  valuations), never padded with invented rates.
 - **Financial-independence projection.** Scenario table (return rates x
   spending levels), the *required* return to hit each target, and a stress
   test replaying the user's worst historical drawdown. Solve for what must
-  be true, not just what might happen.
+  be true, not just what might happen. The blocking input is the user's
+  target annual spending - ask for it, record it in the context file, and
+  once a plan is chosen, write it down with a review cadence instead of
+  re-deriving it every session.
 
 Label every number as observed, derived, or assumed. List the assumptions
 that most change the conclusion.
