@@ -18,8 +18,9 @@
 │   │                              #   entry citing each figure's source file -
 │   │                              #   no parser; they are not a recurring series
 │   └── <future-type>/<inst>/      # every new source gets its own directory
-├── scripts/                       # one deterministic converter per source type
+├── scripts/                       # deterministic converters and rebuilders
 │   ├── convert_<type>.py          # full rebuild, idempotent, sorted output
+│   ├── refresh_financial_model.py # rebuild decision-oriented derived outputs
 │   └── check_data_freshness.py    # what is missing or due soon
 ├── data/
 │   ├── documents.csv              # manifest: one row per source doc (hash, period, parser version)
@@ -32,12 +33,19 @@
 │   │   └── ...
 │   ├── quality/                   # reproducible check results per domain
 │   │   └── <domain>_checks.csv    #   check, expected, actual, status
-│   ├── derived/                   # calculated results (returns, projections)
+│   ├── derived/                   # calculated results; shared consumer interface
+│   │   ├── cashflow_monthly.csv   # conservative cash-flow aggregates
+│   │   ├── net_worth_monthly.csv  # dated historical balance-sheet series
+│   │   ├── portfolio_risk.json    # reproducible current portfolio risk metrics
+│   │   └── financial_snapshot.json# compact latest-known agent/report entry point
 │   └── personal/                  # manually maintained, USER-owned facts
 │       ├── financial_context.json #   goals, liabilities, unknowns list
 │       └── bank_counterparty_rules.csv  # substring -> category mappings
-└── reports/                       # human-readable write-ups
+└── reports/                       # human-readable renderings of derived model
+    └── latest.html                # optional thin renderer; no hidden accounting logic
 ```
+
+See [financial-model.md](financial-model.md) for the derived-model contract, mixed-date rules, conservative cash-flow semantics, and snapshot-first agent behavior.
 
 ## Conventions
 
@@ -58,6 +66,9 @@
   are disposable: any dispute is settled by rerunning the converter against
   `Source/`. Whether to commit them is the user's call (Phase 1): committing
   is convenient; gitignoring reduces exposure if the repo ever leaks.
+- `reports/` are consumers of the derived financial model. Reports may format,
+  chart, and explain derived values, but must not maintain a second set of
+  accounting or deduplication rules. Fix the model, then regenerate reports.
 - `data/raw_text/` (layout-preserving extracted text) is always gitignored:
   it duplicates sensitive document content and is regenerable, but keeping
   it locally lets improved parsers reprocess without information loss.
@@ -80,4 +91,4 @@
 | `Source/` | yes | wins |
 | `data/personal/` | yes (user-stated facts) | user decides |
 | `data/normalized`, `data/quality`, `data/derived` | no | regenerate |
-| `reports/` | no | regenerate |
+| `reports/` | no | regenerate from the financial model |
