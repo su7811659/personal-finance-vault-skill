@@ -19,8 +19,9 @@ Note every variant you must handle; expect more in old documents.
   codepoints that look identical but do not string-match).
 - **When text fails entirely, go visual.** Render one or two pages to PNG,
   read them as images to learn the layout and labels, then return to
-  programmatic extraction for the actual data. Vision is for *learning the
-  layout*, never the production data path.
+  programmatic extraction for the actual data where possible. For facts
+  available only visually, use explicit reviewed records (section 9), not
+  silently embedded constants or unreviewed OCR presented as verified data.
 - **Positional PDFs (rebuilt from character boxes) have three geometry
   traps.** (a) Group characters into lines by the **vertical center** of each
   glyph's ink box, never by its top: a short glyph - a full-width hyphen, a
@@ -46,12 +47,14 @@ Note every variant you must handle; expect more in old documents.
   ordering you should reverse to store oldest-first.
 - **Local calendars.** Convert e.g. ROC years (+1911) at the parsing
   boundary; store ISO dates only.
-- **Hash what git will store.** If `.gitattributes` pins CSV sources to LF,
-  normalize a CRLF download's line endings **before** archiving and hashing
-  it - otherwise the recorded `file_sha256` can never be reproduced from a
-  fresh clone. Same rule for any text source: the bytes you hash must be the
-  bytes the repository preserves. Never transcode the character encoding,
-  though - archive cp950/Big5 content as-is and decode at parse time.
+- **Preserve original bytes across checkout.** Disable Git text conversion
+  for original documents under `Source/` (for example, `Source/** -text` in
+  `.gitattributes`) and hash the archived bytes. Decode text at parse time;
+  normalize only derived representations. Generated text can use pinned LF.
+  For an existing vault, investigate historical hash/EOL mismatches before
+  changing attributes or hashes; record any migration explicitly rather
+  than silently rewriting originals or treating a new hash as proof of the
+  old document's identity.
 
 ## 3. One converter script per source type
 
@@ -135,6 +138,15 @@ regression - a permanently-yellow check trains everyone to ignore it.
 **Every mismatch gets investigated before the dataset is called clean.**
 Legitimate explanations (pending settlement, same-day reordering) get
 recorded next to the check, not waved away.
+
+Passing arithmetic does not prove coverage. Maintain a source registry with
+path, hash, document type, period, parser version, and processing status;
+link normalized and quality rows back to it. Report unsupported, unparsed,
+partial, and fully covered sources separately. For multi-section documents,
+account for pages and sections, including intentionally non-data pages and
+unreadable regions. Validate record counts and parent-child references where
+the source makes them checkable. Never label an entire document complete
+because its first table reconciles.
 
 Also document what the parser does **not** yet recognize (a "current
 limitations" section in the data README). Honesty about the tool is the
@@ -221,3 +233,37 @@ a zero-byte alias that exits with an error and no output, so the hook dies
 every session while the real interpreter (`py`, or a fully-pathed python)
 sits unused. If the interpreter situation is uncertain, verify with
 `python --version` / `py --version` and write the working one into the hook.
+
+## 9. Source-bound reviewed records
+
+For image-only labels or ambiguous extraction, preserve a reviewed record
+under `data/personal/` containing the source path and SHA-256, page/region,
+field, raw transcription, interpreted value/unit, review date, and review
+status. State whether an agent visually checked it or the user confirmed it;
+do not imply user confirmation that did not happen. Leave uncertain values
+null with a pending question. Keep identity details out of these records.
+
+The converter may consume these records only when the source hash matches.
+A changed source requires renewed review, not automatic reuse. Preserve
+blanks, ranges, units, and qualifying text; test that a changed hash fails
+closed and that missing values stay missing. The generated table remains
+reproducible from the original plus the explicit review input.
+
+## 10. Portable, scoped rebuilds
+
+- Separate core parsing dependencies from optional integrations such as mail
+  retrieval. Check the actual interpreter and tools used by build commands;
+  fail for missing dependencies of the requested operation, but warn for
+  unused optional tools. Do not require one operating system's launcher.
+- Use a machine-readable pipeline configuration (e.g. `config/pipeline.json`)
+  for converter commands, expected coverage starts, required output files,
+  and strict quality policy. A missing required check file must not look
+  like a passing empty result. Keep personal cadence settings separate.
+- Allow selected-source rebuilds when independent domains do not need to
+  rerun. Stage selected outputs, validate them against the retained datasets,
+  then rebuild dependent registries, query views, and derived models. Publish
+  the consistent result only after the relevant gates pass; restore prior
+  outputs if publication fails. Selection must not disable shared checks.
+- Test meaningful failure paths: malformed sources, hash conflicts, missing
+  outputs, and cross-source mismatches must leave published data intact.
+  Exercise supported environments with fictional fixtures and no credentials.

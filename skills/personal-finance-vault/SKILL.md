@@ -15,8 +15,9 @@ and analyzed with honest handling of unknowns.
 Apply these in every phase. They are the difference between a data vault and
 a pile of files.
 
-1. **Source documents are canonical.** Everything else must be reproducible
-   from them by rerunning a script. Never hand-edit generated files.
+1. **Source documents are canonical.** Generated data must be reproducible
+   from them plus explicit user-owned context and reviewed inputs by rerunning
+   a script. Never hand-edit generated files.
 2. **Reconcile before you trust.** Every parser must prove its own output:
    line items sum to stated subtotals, running balances chain correctly,
    totals match across independent sources. A parse without a passing check
@@ -82,7 +83,10 @@ a pile of files.
 
 Ask which sources exist: brokerage statements, payslips, bank account
 exports, credit card statements, loan contracts/screenshots, pension
-records, e-invoice exports. Tell the user to drop new raw documents directly
+records, insurance documents, shared-expense exports, and e-invoice exports.
+For insurance intake and interpretation, read
+[references/insurance-playbook.md](references/insurance-playbook.md).
+Tell the user to drop new raw documents directly
 into the top level of `Source/`; do not require an inbox directory or require
 the user to know the final taxonomy. At session start and whenever the user
 says files were added, scan only files directly under `Source/` and route
@@ -107,10 +111,11 @@ them as follows:
    hash-identical. Detect and delete only **hash-identical** duplicates
    (`sha256`), with the
    user's confirmation.
-5. Move the unchanged original into its canonical directory, then run that
-   source type's transactional importer and review its summary and quality
-   checks. If no parser exists yet, archive the document and report that a
-   dedicated parser is the next required step.
+5. Pass recognized documents to the source type's transactional importer,
+   which stages and validates before publishing the unchanged original and
+   generated outputs. Review its summary and quality checks. If no parser
+   exists yet, archive the original and explicitly mark it unparsed; archival
+   alone does not establish analysis readiness.
 6. Check continuity: list missing months and ask the user whether they are
    real gaps or expected (paper-only era, account opened later). Record the
    answer in the source directory's README so no future session re-asks.
@@ -141,6 +146,10 @@ each source type. Summary of the loop:
 6. Personal knowledge (which account is rent, which transfer is the side-gig
    payout) belongs in a user-maintained rules file under `data/personal/`, applied by
    the parser before generic rules - so extending it requires no code change.
+7. Track source coverage separately from arithmetic correctness: identify
+   archived-but-unparsed documents and missing pages/sections. When a visual
+   fact cannot be extracted reliably, use the source-bound reviewed-record
+   workflow in the parser playbook, not an unexplained hardcoded value.
 
 ## Phase 4 - Analysis
 
@@ -180,6 +189,17 @@ order they usually become possible:
 Label every number as observed, derived, or assumed. List the assumptions
 that most change the conclusion.
 
+### Optional HTML dashboard
+
+When validated data can support a useful overview, offer a local HTML
+dashboard and let the user choose whether to generate it. Read
+[references/dashboard-playbook.md](references/dashboard-playbook.md) to
+assess readiness and, if accepted, build and verify it. Enough data means
+enough evidence for the proposed panels, not an arbitrary row count or a
+requirement to have every financial domain. Do not generate automatically,
+repeat a declined offer every session, or treat approval as permission to
+publish, host, or upload private data.
+
 ## Phase 5 - Maintenance
 
 1. Add a **freshness checker** script that knows each source's cadence and
@@ -198,6 +218,11 @@ that most change the conclusion.
    importer script, the checks to review, and the red lines. The vault then
    carries its own operating manual, and any future session follows the
    same procedure instead of improvising.
+5. Keep build commands, expected coverage, output inventories, and quality
+   policy in one machine-readable configuration once multiple import paths
+   need them. Local skills reference that configuration rather than copying
+   its rules. Follow the parser playbook's environment and scoped-rebuild
+   guidance; optional integrations must not block unrelated local imports.
 
 ## Red lines
 

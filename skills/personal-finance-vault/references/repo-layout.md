@@ -15,8 +15,8 @@
 │   ├── loan/<loan-id>/            # contracts, web screenshots, dated
 │   ├── <snapshot-type>/           # point-in-time records (pension printout,
 │   │                              #   insurance register): archive + a context
-│   │                              #   entry citing each figure's source file -
-│   │                              #   no parser; they are not a recurring series
+│   │                              #   entry for simple facts; a dedicated parser
+│   │                              #   when detail or repeated analysis warrants it
 │   └── <future-type>/<inst>/      # every new source gets its own directory
 ├── scripts/                       # deterministic converters and rebuilders
 │   ├── convert_<type>.py          # full rebuild, idempotent, sorted output
@@ -75,11 +75,10 @@ See [financial-model.md](financial-model.md) for the derived-model contract, mix
 - `data/personal/` holds only analysis-relevant facts - no government IDs,
   no full account numbers, no identity documents, no scanned contracts
   (those stay in `Source/`).
-- Add a `.gitattributes` pinning text files to one EOL style (e.g. CSV to
-  LF) and marking PDFs/databases binary - byte-identical rebuilds across
-  platforms depend on it. Corollary: normalize a text source's line endings
-  to the pinned style **before** archiving and hashing it, so the recorded
-  `file_sha256` reproduces from a fresh clone (see the parser playbook).
+- Add a `.gitattributes` preserving original source bytes (`Source/** -text`),
+  pinning generated text to one EOL style (e.g. LF), and marking PDFs/databases
+  binary. Hash originals without newline or encoding conversion; investigate
+  existing hash discrepancies before a migration (see the parser playbook).
 - `Source/` is the only irreplaceable layer (institutions purge download
   history). Recommend an encrypted backup (e.g. an encrypted archive or a
   private encrypted remote) beyond the single working copy.

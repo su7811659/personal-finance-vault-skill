@@ -9,8 +9,9 @@ These rules are what make the vault safe to hand to *any* agent session.
 - At the start of a session, run `python scripts/check_data_freshness.py`
   and tell the user which source documents are missing or due soon. Offer to
   import anything they provide. Also scan files directly under `Source/`:
-  treat them as new raw intake, inspect their contents, and move recognized
-  documents into the matching canonical subdirectory before importing.
+  treat them as new raw intake, inspect their contents, and route recognized
+  documents through the matching transactional importer. If no importer
+  exists, archive unchanged and mark unparsed rather than analysis-ready.
 - Treat `Source/` as the canonical records. Name files by coverage:
   statements `YYYY-MM-DD.<ext>` (period end), monthly documents
   `YYYY-MM.<ext>`, range exports `<start>_<end>.<ext>`.
@@ -28,6 +29,13 @@ These rules are what make the vault safe to hand to *any* agent session.
 - Review the quality checks after every rebuild. Do not describe the dataset
   as clean while any check is in `mismatch` status or an unexplained warning
   remains.
+- Track source/page/section coverage as well as arithmetic checks. Bind any
+  reviewed visual transcription to its source hash and location; a changed
+  source requires renewed review. Preserve original bytes across Git checkout.
+- Once configured, use the machine-readable pipeline configuration for build
+  commands, expected coverage, outputs, and quality policy; do not duplicate
+  its rules in local skills. Rebuild dependent query/derived layers after
+  imports, including selected-source rebuilds.
 - Import new documents through the transactional importer
   [name it here, e.g. `python scripts/import_statement.py`]: conflicts are
   rejected, validation runs against a staged rebuild, and a failed import
@@ -36,6 +44,14 @@ These rules are what make the vault safe to hand to *any* agent session.
   investment gains. Treat planned events (scheduled repayments, expected
   wires) as plans, never as completed transactions, until a statement
   confirms them.
+- Use the vault's deduplicated query views for cross-source totals. Shared
+  expense records are candidate context until corroborated or explicitly
+  confirmed; advances and repayments are not extra purchases. Insurance
+  benefits are not asset values, and premiums listed are not proof of payment.
+- When validated data supports useful panels, offer an optional local HTML
+  dashboard. Generate only if the user accepts or requests it; respect a
+  decline. Show coverage, as-of dates, and unknowns. Generation does not
+  authorize hosting, sharing, or uploading financial data.
 - Facts that cannot be derived from documents live in
   `data/personal/financial_context.json`. Unknown values are null and listed
   under `unknown_values_must_not_be_inferred` - never guessed. When new

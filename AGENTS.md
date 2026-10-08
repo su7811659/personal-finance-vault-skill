@@ -16,7 +16,7 @@ have the user pick or create an empty directory outside this repo.
 The skill is plain markdown - no framework machinery required. Read
 [skills/personal-finance-vault/SKILL.md](skills/personal-finance-vault/SKILL.md)
 and follow its five phases directly, starting in the user's chosen vault
-directory. The four files under
+directory. The files under
 [skills/personal-finance-vault/references/](skills/personal-finance-vault/references/)
 are the supporting playbooks; SKILL.md tells you when to read each.
 

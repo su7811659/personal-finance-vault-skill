@@ -57,6 +57,18 @@ Reverse-engineer the employer's actual mechanics from payslip history:
 - Watch for double counting across sources: card purchases appear again as
   the card-payment debit in the bank account. Count the purchases, not the
   repayment (or vice versa), never both.
+- Shared-expense apps are candidate context, not extra bank transactions.
+  Keep gross payment, the user's share, advances for others, and repayments
+  separate. A date/amount match alone is not confirmation: require additional
+  independent evidence or explicit user confirmation, retain the matching
+  rationale and status, and keep ambiguous candidates out of confirmed totals.
+  A repayment settles a receivable; it is not automatically income or another
+  purchase. An app record alone does not prove the debt was paid.
+- Treat recurring exports as snapshots: use stable IDs and a documented
+  snapshot-selection rule rather than summing overlapping exports. Preserve
+  source-reported currency labels and units. Any reviewed correction belongs
+  in a scoped override with evidence and an effective period; record actual
+  versus estimated FX separately and never silently relabel the raw source.
 
 ## 4. Multi-currency
 

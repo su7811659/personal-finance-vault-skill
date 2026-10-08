@@ -29,6 +29,13 @@ the methodology could be shared.
   financial-independence scenarios solved for the *required* return.
 - **Freshness checks**: every new session opens by telling you which
   statement, payslip, or export is missing or due.
+- **Coverage and evidence**: track unparsed pages and sources separately from
+  passing totals; keep reviewed visual facts tied to their original file hash.
+- **Insurance and shared expenses**: distinguish cover from asset value,
+  premiums due from paid, and tentative matches from confirmed settlements.
+- **Optional HTML dashboard**: once validated data supports useful panels,
+  offer a local dashboard for the user to accept or decline. No automatic
+  generation, hosting, or publication of financial data.
 
 ## Install
 
@@ -104,7 +111,9 @@ skills/personal-finance-vault/
     ├── AGENTS-template.md       # agent rules for the generated vault repo
     ├── financial_context.template.json
     ├── parser-playbook.md       # extraction, staged imports, validation
-    └── analysis-playbook.md     # returns math, income/spending, FI scenarios
+    ├── analysis-playbook.md     # returns math, income/spending, FI scenarios
+    ├── insurance-playbook.md    # coverage evidence, premiums, valuations
+    └── dashboard-playbook.md    # readiness, user choice, local HTML checks
 examples/
 └── demo-walkthrough.md          # fictional three-session example
 ```
